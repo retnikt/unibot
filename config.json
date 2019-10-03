@@ -1,0 +1,6 @@
+{
+  "core": {
+    "prefix": "~",
+    "debug": true
+  }
+}
