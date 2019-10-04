@@ -2,6 +2,7 @@ import asyncio
 import logging
 import shlex
 import sys
+from pathlib import Path
 from platform import platform
 from typing import *
 
@@ -12,7 +13,7 @@ import unibot._utils
 import unibot.config
 import unibot.parser
 import unibot.plugin_manager
-from unibot import command
+from unibot import command, __VERSION__
 
 EVENT_NAMES = [
     "connect",
@@ -71,8 +72,7 @@ EVENT_NAMES = [
 ]
 
 
-@unibot.config.config_section("core")
-class CoreConfig:
+class CoreConfig(unibot._globals.config.section, name="core"):
     prefix: str = "~"
     debug: bool = False
     debug_channel: Optional[str] = None
@@ -81,8 +81,7 @@ class CoreConfig:
     reconnect: bool = True
 
 
-@unibot.config.config_section("credentials")
-class Credentials:
+class CoreCredentials(unibot._globals.credentials.section, name="core"):
     client_id: str
     bot_token: str
 
@@ -94,13 +93,10 @@ class Bot(discord.Client):
                  credentials_file="credentials.json"):
         super(Bot, self).__init__()
 
+        self.config: Optional[CoreConfig] = None
+        self.credentials: Optional[CoreCredentials] = None
         self.config_file = config_file
-        self.config_config = unibot.config.JSONConfig(config_file)
-        self.config = CoreConfig(self.config_config)
-
-        self.credentials_file = config_file
-        self.config_credentials = unibot.config.JSONConfig(credentials_file)
-        self.credentials = Credentials(self.config_credentials)
+        self.credentials_file = credentials_file
 
         self._listener_coros = {event_name: [] for event_name in EVENT_NAMES}
         self.commands = []
@@ -108,7 +104,7 @@ class Bot(discord.Client):
         self.logger = logging.getLogger("unibot")
         self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(logging.Formatter(self.FORMAT, style='{'))
+        handler.setFormatter(logging.Formatter(self.FORMAT, style="{"))
         self.logger.addHandler(handler)
 
         self.plugin_manager = unibot.plugin_manager.PluginManager(self)
@@ -126,7 +122,8 @@ class Bot(discord.Client):
         @self.event_listener("message")
         async def on_message(message):
             if message.author == self.user or not message.content.startswith(
-                    self.config.prefix):
+                    self.config.prefix
+            ):
                 return
             # remove prefix
             content = message.content[len(self.config.prefix):]
@@ -137,24 +134,29 @@ class Bot(discord.Client):
             except unibot.parser.CommandError:
                 return
             self.logger.debug(f"Executing command: '{message.content}'")
-            # noinspection PyBroadException
             try:
                 await self.subcommands(message, **vars(namespace))
-            except Exception:
-                self.logger.error(f"Exception in command '{message.content}'",
-                                  exc_info=True)
+            except Exception as e:
+                self.logger.error(
+                    f"Exception in command '{message.content}'", exc_info=e
+                )
                 if self.config.debug:
                     import traceback
+
                     tb = traceback.format_exc()
                     await message.channel.send(f"Error:\n```{tb}```")
                 else:
                     await message.channel.send(
                         "Oops! An error occurred while executing your command."
-                        "Please contact the server administrator."
-                        "If you are the server administrator, check the server logs" +
-                        (f" and debug channel ({self.config.debug_channel})"
-                         if self.config.debug_channel else "") +
-                        " for more details.")
+                        "Please contact the server administrator. If you are"
+                        "the bot administrator, check the server logs"
+                        + (
+                            f" and debug channel ({self.config.debug_channel})"
+                            if self.config.debug_channel
+                            else ""
+                        )
+                        + " for more details."
+                    )
             finally:
                 self.root_parser.context_message = None
 
@@ -169,19 +171,29 @@ class Bot(discord.Client):
             else:
                 self.logger.error("Disconnected.")
 
-    def ask_question(self, channel: discord.TextChannel, question, options,
-                     target_user, reaction_emoji=LETTER_EMOJI):
+    async def ask_question(
+            self,
+            channel: discord.TextChannel,
+            question,
+            options,
+            target_user,
+            reaction_emoji=LETTER_EMOJI,
+    ):
         if len(options) > len(reaction_emoji):
             raise ValueError("too many options")
-        text = question + "\n" + "\n".join(
-            map(" ".join, zip(reaction_emoji, options)))
+        text = question + "\n" + "\n".join(map(" ".join,
+                                               zip(reaction_emoji, options)))
 
         def check(m):
             return m.author == target_user
 
         message = await channel.send(text)
-        await asyncio.gather([message.add_reaction(emoji) for emoji in
-                              reaction_emoji[:len(options) - 1]])
+        await asyncio.gather(
+            [
+                message.add_reaction(emoji)
+                for emoji in reaction_emoji[: len(options) - 1]
+            ]
+        )
         reaction = await self.wait_for("reaction_add", check=check)
 
     async def close(self):
@@ -190,8 +202,10 @@ class Bot(discord.Client):
         return super(Bot, self).close()
 
     def event(self, coro):
-        raise NotImplementedError("the event method is not supported on a Bot. "
-                                  "Use the @event_listener decorator instead")
+        raise NotImplementedError(
+            "the event method is not supported on a Bot. "
+            "Use the @event_listener decorator instead"
+        )
 
     def event_listener(self, name: str):
         if name not in EVENT_NAMES:
@@ -223,12 +237,10 @@ class Bot(discord.Client):
         return self.subcommands_class.command(cls)
 
     def generate_add_url(self):
-        return f"https://discordapp.com/oauth2/authorize?&client_id={self.credentials.client_id}" \
-               "&scope=bot&permissions=8"
-
-    def open_add_url(self):
-        import webbrowser
-        webbrowser.open(self.generate_add_url())
+        return (
+            "https://discordapp.com/oauth2/authorize?&client_id="
+            f"{self.credentials.client_id}&scope=bot&permissions=8"
+        )
 
     class _GlobalBotContext:
         def __init__(self, bot):
@@ -243,20 +255,23 @@ class Bot(discord.Client):
 
     def run(self):
         with self.global_bot_context:
-            self.logger.info(f"Starting bot.")
+            self.logger.info("Starting bot.")
             self.logger.debug(f"Unibot version: {__VERSION__:08x}")
             self.logger.debug(f"Python version: {sys.hexversion:08x}")
             self.logger.debug(f"Platform: {platform()}")
             self.logger.info("Loading config.")
-            self.config_config.load()
-            self.config_credentials.load()
+            self.config = self.config.load(Path(self.config_file))
+            self.credentials = unibot._globals.credentials.load(
+                Path(self.credentials_file)
+            )
             if self.config.load_base:
-                self.logger.info(f"Loading base.")
+                self.logger.info("Loading base.")
                 from unibot import base
+
                 self.plugin_manager.plugins["unibot.base"] = base
             if self.config.safe_mode:
-                self.logger.info(
-                    f"Skipping loading plugins (safe mode enabled).")
+                self.logger.info("Skipping loading plugins (safe mode "
+                                 "enabled).")
                 return
             else:
                 self.logger.info("Loading plugins.")
@@ -266,11 +281,14 @@ class Bot(discord.Client):
 
             loop = asyncio.get_event_loop()
             if sys.version_info < (3, 7, 4):
-                # a bug between python 3.7 and 3.7.3 causes some weird SSL error which causes crashes (see docstring)
+                # a bug between python 3.7 and 3.7.3 causes some weird SSL error
+                # which causes crashes (see docstring)
                 unibot._utils.ignore_aiohttp_ssl_error(loop)
             try:
-                loop.run_until_complete(self.start(self.credentials.bot_token,
-                                                   reconnect=self.config.reconnect))
+                loop.run_until_complete(
+                    self.start(self.credentials.bot_token,
+                               reconnect=self.config.reconnect)
+                )
             except KeyboardInterrupt or SystemExit:
                 loop.run_until_complete(self.logout())
             # cancel all tasks lingering

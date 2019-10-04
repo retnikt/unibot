@@ -18,7 +18,7 @@ class Config:
             def __init_subclass__(cls, name: str):
                 self._section_classes[name] = cls
 
-        self.register = Section
+        self.section = Section
 
     def load(self, path: pathlib.Path):
         with path.open("r") as f:

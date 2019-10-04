@@ -69,15 +69,24 @@
       <bodyTop />
       <bodyBottom />
     </HtmlSettings>
-    <CssSettings previewScheme="UI_SCHEME" cssUri="" isCssUriEnabled="false" isCssUriSerial="true" isCssTextEnabled="true" isDynamicPageWidth="true">
+    <CssSettings previewScheme="DARK_SCHEME" cssUri="" isCssUriEnabled="false" isCssUriSerial="true" isCssTextEnabled="true" isDynamicPageWidth="true">
       <StylesheetProvider>
-        <provider providerId="com.vladsch.idea.multimarkdown.editor.javafx.html.css" providerName="Default JavaFx Stylesheet" />
+        <provider providerId="com.vladsch.idea.multimarkdown.editor.swing.html.css" providerName="Default Swing Stylesheet" />
       </StylesheetProvider>
       <ScriptProviders>
         <provider providerId="com.vladsch.idea.multimarkdown.editor.hljs.html.script" providerName="HighlightJS Script" />
       </ScriptProviders>
       <cssText>html {
     background: #1b2529;
+    color: #c3cee3;
+    font-family: &quot;Noto Sans&quot;; 
+}
+code {
+    background: #c3cee3;
+}
+
+.container &gt; div &gt; h3 {
+    display: none;
 }</cssText>
       <cssUriHistory />
     </CssSettings>
