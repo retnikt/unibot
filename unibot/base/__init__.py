@@ -18,7 +18,9 @@ class Help(BaseCommand):
         # DM the user help
         if not message.author.dm_channel:
             await message.author.create_dm()
-        asyncio.create_task(message.author.dm_channel.send(bot.root_parser.format_help()))
+        asyncio.create_task(
+            message.author.dm_channel.send(bot.root_parser.format_help())
+        )
 
 
 @bot.command
@@ -28,6 +30,7 @@ class Restart(BaseCommand):
     async def callback(self, message: "discord.Message"):
         import os
         import sys
+
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 
@@ -36,9 +39,17 @@ class Embed(BaseCommand):
     name = "embed"
 
     async def callback(self, message: "discord.Message"):
-        await message.channel.send("message", embed=discord.Embed(title="title", type="rich", description="description",
-                                                                  url="https://google.com/", timestamp=datetime.now(),
-                                                                  colour=discord.Colour.red()))
+        await message.channel.send(
+            "message",
+            embed=discord.Embed(
+                title="title",
+                type="rich",
+                description="description",
+                url="https://google.com/",
+                timestamp=datetime.now(),
+                colour=discord.Colour.red(),
+            ),
+        )
 
 
 @bot.command
