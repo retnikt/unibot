@@ -22,8 +22,7 @@ class PluginManifest:
     requirements: Sequence[Mapping[str, str]] = ()
 
 
-@unibot.config.config_section("plugins")
-class PluginsConfig:
+class PluginsConfig(unibot._globals.config.section, name="plugins"):
     plugin_search_directories: Sequence[str] = ("plugins",)
     plugins_enabled: Sequence[str] = ()
     plugin_unload_timeout: Union[float, int] = 5
@@ -44,7 +43,7 @@ class PluginManager:
 
     def load_plugins(self):
         for finder, name, _ in pkgutil.iter_modules(
-            self.config.plugin_search_directories
+                self.config.plugin_search_directories
         ):
             spec = finder.find_spec(name)
             if spec is None:
@@ -76,13 +75,15 @@ class PluginManager:
             try:
                 if asyncio.iscoroutinefunction(plugin.unload_hook):
                     await asyncio.wait_for(
-                        plugin.unload_hook(plugin), self.config.plugin_unload_timeout
+                        plugin.unload_hook(plugin),
+                        self.config.plugin_unload_timeout
                     )
                 else:
                     plugin.unload_hook(plugin)
             except Exception as e:
                 self.logger.error(
-                    f"Exception in plugin unload hook for plugin '{name}':", exc_info=e
+                    f"Exception in plugin unload hook for plugin '{name}':",
+                    exc_info=e
                 )
             if not force:
                 return False
