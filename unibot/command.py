@@ -60,10 +60,12 @@ class BaseCommand:
     def __call__(self, message, namespace):
         for permission in self.required_permissions:
             if permission not in bot.get_user_permissions(message.author):
-                message.add_reaction('⛔⛔⛔⛔⛔⛔🚫\N{prohibited}')
-                message.channel.send(f"{message.author.mention} "
-                                     f"You do not have the required permission '{permission}' "
-                                     "to execute this command")
+                message.add_reaction("⛔⛔⛔⛔⛔⛔🚫\N{prohibited sign}")
+                message.channel.send(
+                    f"{message.author.mention} "
+                    f"You do not have the required permission '{permission}' "
+                    "to execute this command"
+                )
                 return
         return self.callback(message, **vars(namespace))
 
@@ -90,7 +92,7 @@ class CommandWithSubCommands(BaseCommand):
             dest=self._dest,
             required=self.required,
             help=self.help,
-            metavar=self.metavar
+            metavar=self.metavar,
         )
 
         self._commands_callbacks = {}

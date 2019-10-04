@@ -43,17 +43,21 @@ class PluginManager:
         self.config = PluginsConfig(self.bot.config_config)
 
     def load_plugins(self):
-        for finder, name, _ in \
-                pkgutil.iter_modules(self.config.plugin_search_directories):
+        for finder, name, _ in pkgutil.iter_modules(
+            self.config.plugin_search_directories
+        ):
             spec = finder.find_spec(name)
             if spec is None:
-                self.logger.debug(f"Ignoring plugin {name}"
-                                  f"with no module spec available")
+                self.logger.debug(
+                    f"Ignoring plugin {name}" f"with no module spec available"
+                )
                 continue
             else:
                 if name in self.plugins:
-                    self.logger.warning(f"Skipping plugin with duplicate name"
-                                        f"'{name}' from '{spec.origin}'.")
+                    self.logger.warning(
+                        f"Skipping plugin with duplicate name"
+                        f"'{name}' from '{spec.origin}'."
+                    )
                 self.load_plugin_from_spec(spec)
 
     async def unload_plugin(self, name, force: bool = False) -> bool:
@@ -68,17 +72,18 @@ class PluginManager:
         if plugin is None:
             raise NameError("Plugin is not loaded")
 
-        if hasattr(plugin, 'unload_hook'):
+        if hasattr(plugin, "unload_hook"):
             try:
                 if asyncio.iscoroutinefunction(plugin.unload_hook):
-                    await asyncio.wait_for(plugin.unload_hook(plugin),
-                                           self.config.plugin_unload_timeout)
+                    await asyncio.wait_for(
+                        plugin.unload_hook(plugin), self.config.plugin_unload_timeout
+                    )
                 else:
                     plugin.unload_hook(plugin)
             except Exception as e:
                 self.logger.error(
-                    f"Exception in plugin unload hook for plugin '{name}':",
-                    exc_info=e)
+                    f"Exception in plugin unload hook for plugin '{name}':", exc_info=e
+                )
             if not force:
                 return False
 
@@ -92,7 +97,8 @@ class PluginManager:
                 self.logger.error(
                     f"Exception in plugin unload hook '{hook.__name__}'"
                     f"for plugin {name}:",
-                    exc_info=e)
+                    exc_info=e,
+                )
                 if not force:
                     return False
 

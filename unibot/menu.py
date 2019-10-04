@@ -2,7 +2,7 @@ import asyncio
 
 # regional indicators as letters
 LETTER_EMOJI = tuple(map(chr, range(0x0001F1E6, 0x0001F200)))
-THUMBS_EMOJI = ("\N{thumbs up}", "\N{thumbs down}")
+THUMBS_EMOJI = ("\N{thumbs up sign}", "\N{thumbs down sign}")
 TICK_CROSS_EMOJI = ("\N{check mark}", "\N{cross mark}")
 
 
@@ -25,20 +25,27 @@ class Menu:
         return question + "\n" + "\n".join(map(": ".join, zip(emoji, options)))
 
     def _check(self, target_user, message):
-        return lambda reaction, user: reaction.message == message and \
-                                      user == target_user and \
-                                      reaction.emoji in self.emoji
+        return (
+            lambda reaction, user: reaction.message == message
+            and user == target_user
+            and reaction.emoji in self.emoji
+        )
 
-    def _run(self, channel, target_user):
+    async def _run(self, channel, target_user):
         message = await channel.send(self.text)
-        await asyncio.gather((message.add_reaction(emoji) for emoji in
-                              self.emoji[:len(self.options) - 1]))
+        await asyncio.gather(
+            (
+                message.add_reaction(emoji)
+                for emoji in self.emoji[: len(self.options) - 1]
+            )
+        )
         reaction = await self.bot.wait_for(
-            "reaction_add", check=self._check(message, target_user))
+            "reaction_add", check=self._check(message, target_user)
+        )
         return reaction
 
-    def run(self, channel, target_user):
-        reaction = self._run(channel, target_user)
+    async def run(self, channel, target_user):
+        reaction = await self._run(channel, target_user)
         return self.mapper[self.options[self.emoji.index(reaction.emoji)]]
 
 

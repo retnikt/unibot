@@ -32,12 +32,12 @@ def ignore_aiohttp_ssl_error(loop):
             "Fatal error on transport",
         }:
             # validate we have the right exception, transport and protocol
-            exception = context.get('exception')
-            protocol = context.get('protocol')
+            exception = context.get("exception")
+            protocol = context.get("protocol")
             if (
-                    isinstance(exception, ssl.SSLError)
-                    and exception.reason == 'KRB5_S_INIT'
-                    and isinstance(protocol, SSL_PROTOCOLS)
+                isinstance(exception, ssl.SSLError)
+                and exception.reason == "KRB5_S_INIT"
+                and isinstance(protocol, SSL_PROTOCOLS)
             ):
                 return
         if orig_handler is not None:
