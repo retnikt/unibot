@@ -137,26 +137,7 @@ class Bot(discord.Client):
             try:
                 await self.subcommands(message, **vars(namespace))
             except Exception as e:
-                self.logger.error(
-                    f"Exception in command '{message.content}'", exc_info=e
-                )
-                if self.config.debug:
-                    import traceback
-
-                    tb = traceback.format_exc()
-                    await message.channel.send(f"Error:\n```{tb}```")
-                else:
-                    await message.channel.send(
-                        "Oops! An error occurred while executing your command."
-                        "Please contact the server administrator. If you are"
-                        "the bot administrator, check the server logs"
-                        + (
-                            f" and debug channel ({self.config.debug_channel})"
-                            if self.config.debug_channel
-                            else ""
-                        )
-                        + " for more details."
-                    )
+                await message.exception_handler(e, message)
             finally:
                 self.root_parser.context_message = None
 
@@ -170,6 +151,28 @@ class Bot(discord.Client):
                 self.logger.info("Disconnected.")
             else:
                 self.logger.error("Disconnected.")
+
+    async def exception_handler(self, e, message):
+        self.logger.error(
+            f"Exception in command '{message.content}'", exc_info=e
+        )
+        if self.config.debug:
+            import traceback
+
+            tb = traceback.format_exc()
+            await message.channel.send(f"Error:\n```{tb}```")
+        else:
+            await message.channel.send(
+                "Oops! An error occurred while executing your command."
+                "Please contact the server administrator. If you are"
+                "the bot administrator, check the server logs"
+                + (
+                    f" and debug channel ({self.config.debug_channel})"
+                    if self.config.debug_channel
+                    else ""
+                )
+                + " for more details."
+            )
 
     async def ask_question(
             self,
