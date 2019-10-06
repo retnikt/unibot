@@ -9,7 +9,9 @@ class Config:
     config with sub-configuration sections
     """
 
-    def __init__(self):
+    def __init__(self, path: pathlib.Path):
+        self.path = path
+        self._section_data_raw = {}
         self._section_data = {}
         self._section_classes = {}
         self._section_instances = {}
@@ -31,6 +33,26 @@ class Config:
                 del self_outer._section_instances[self.__config_name__]
                 del self_outer._section_classes[self.__config_name__]
 
+            def __setattr__(self, key, value):
+                super(Section, self).__setattr__(key, value)
+                self_outer._section_data_raw[self.__config_name__][key] = value
+                self_outer.flush_config()
+
+            __setitem__ = __setattr__
+
+            def __delattr__(self, item):
+                super(Section, self).__delattr__(item)
+                del self_outer._section_data_raw[self.__config_name__][item]
+                self_outer.flush_config()
+
+            __delitem__ = __delattr__
+
+            def __getitem__(self, item):
+                try:
+                    getattr(self, item)
+                except AttributeError as e:
+                    raise KeyError from e
+
         self.section = Section
 
     def reload(self):
@@ -42,9 +64,16 @@ class Config:
                 # needs reinitialising
                 self._section_instances[k].__init__()
 
-    def load(self, path: pathlib.Path):
-        with path.open("r") as f:
-            data = json.load(f)
+    def load(self):
+        with self.path.open("r") as f:
+            self._section_data_raw = json.load(f)
 
         for key, cls in self._section_classes:
-            self._section_data[key] = data.get(key, {})
+            self._section_data[key] = self._section_data_raw.get(key, {})
+
+    def flush_config(self):
+        with self.path.open("w") as f:
+            json.dump(f, self._section_data_raw)
+
+    def __getitem__(self, item):
+        return self._section_instances[item]
