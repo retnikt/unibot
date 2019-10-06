@@ -20,12 +20,11 @@ class BaseCommand:
     name: str
     help: Optional[str] = None
     description: Optional[str] = None
-
+    required_permissions: Sequence[str] = []
     callback: Callable[..., None]
 
     def __init__(self, parser: "argparse.ArgumentParser"):
         self.parser = parser
-        self.required_permissions = []
         if not isinstance(self, CommandWithSubCommands):
             self.initialise()
 
@@ -80,12 +79,15 @@ class CommandWithSubCommands(BaseCommand):
 
     @classmethod
     def command(cls, command):
+        if isinstance(command, CommandWithSubCommands):
+            command._depth += 1
         cls.commands.append(command)
 
     def __init__(self, parser):
         super(CommandWithSubCommands, self).__init__(parser)
         # generate a unique subcommand ID
-        self._dest = _SUBCOMMAND_DEST_PREFIX + str(id(self))
+        self._depth = 1
+        self._dest = _SUBCOMMAND_DEST_PREFIX + str(self._depth)
 
         self.subparsers = self.parser.add_subparsers(
             description=self.description,
@@ -102,4 +104,5 @@ class CommandWithSubCommands(BaseCommand):
 
     def callback(self, message, **kwargs):
         command_name = kwargs.pop(self._dest)
-        return self._commands_callbacks[command_name].callback(message, **kwargs)
+        return self._commands_callbacks[command_name] \
+            .callback(message, **kwargs)
