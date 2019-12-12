@@ -2,5 +2,8 @@
   "core": {
     "prefix": "~",
     "debug": true
+  },
+  "test": {
+    "other": 56
   }
 }

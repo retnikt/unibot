@@ -1,7 +1,8 @@
 import json
 import pathlib
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, BaseConfig
 
 
 class Config:
@@ -9,8 +10,8 @@ class Config:
     config with sub-configuration sections
     """
 
-    def __init__(self, path: pathlib.Path):
-        self.path = path
+    def __init__(self):
+        self.path: Optional[pathlib.Path] = None
         self._section_data_raw = {}
         self._section_data = {}
         self._section_classes = {}
@@ -19,10 +20,13 @@ class Config:
         self_outer = self
 
         class Section(BaseModel):
+            class Config(BaseConfig):
+                validate_assignment = True
+
             # noinspection PyMethodOverriding
-            def __init_subclass__(cls, name: str):
-                self._section_classes[name] = cls
-                cls.__config_name__ = name
+            def __init_subclass__(cls, id: str):
+                self._section_classes[id] = cls
+                cls.__config_name__ = id
 
             def __init__(self):
                 data = self_outer._section_data[self.__config_name__]
@@ -64,7 +68,8 @@ class Config:
                 # needs reinitialising
                 self._section_instances[k].__init__()
 
-    def load(self):
+    def load(self, path: pathlib.Path):
+        self.path = path
         with self.path.open("r") as f:
             self._section_data_raw = json.load(f)
 

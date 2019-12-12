@@ -72,7 +72,7 @@ EVENT_NAMES = [
 ]
 
 
-class CoreConfig(unibot._globals.config.section, name="core"):
+class CoreConfig(unibot._globals.config.section, id="core"):
     prefix: str = "~"
     debug: bool = False
     debug_channel: Optional[str] = None
@@ -81,7 +81,7 @@ class CoreConfig(unibot._globals.config.section, name="core"):
     reconnect: bool = True
 
 
-class CoreCredentials(unibot._globals.credentials.section, name="core"):
+class CoreCredentials(unibot._globals.credentials.section, id="core"):
     client_id: str
     bot_token: str
 

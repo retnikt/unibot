@@ -1,8 +1,9 @@
 import sys
 
-assert sys.version_info >= (3, 7), "unsupported python version! please use 3.7+"
-
-if __name__ == "__main__":
+if sys.version_info < (3, 7):
+    print("unsupported python version! please use 3.7+")
+    sys.exit(1)
+else:
     from unibot.bot import Bot
 
     bot = Bot()
