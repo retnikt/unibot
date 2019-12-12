@@ -3,8 +3,9 @@ from datetime import datetime
 
 import discord
 
-from unibot.bot import bot
-from unibot.command import BaseCommand
+from unibot._globals import bot
+from unibot.command import BaseCommand, CommandWithSubCommands
+from . import config
 
 __VERSION__ = 0x000100D
 
@@ -31,7 +32,7 @@ class Restart(BaseCommand):
         import os
         import sys
 
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
 
 @bot.command
@@ -53,8 +54,22 @@ class Embed(BaseCommand):
 
 
 @bot.command
-class ReloadBase(BaseCommand):
-    name = "reload_base"
+class Plugins(CommandWithSubCommands):
+    name = "plugins"
 
-    async def callback(self, message):
-        bot.plugin_manager.reload_plugin("base")
+
+@Plugins.command
+class ReloadPlugin(BaseCommand):
+    name = "reload"
+
+    def initialise(self):
+        self.add_argument("plugin", required=True)
+
+    async def callback(self, message: "discord.Message", plugin):
+        if plugin not in bot.plugin_manager:
+            await message.channel.send(f"Plugin '{plugin}' not found")
+        else:
+            bot.plugin_manager.reload_plugin(plugin)
+            await message.channel.send(
+                f"Plugin '{plugin}' " "successfully reloaded"
+            )

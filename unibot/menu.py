@@ -1,7 +1,5 @@
 import asyncio
 
-# regional indicators as letters
-LETTER_EMOJI = tuple(map(chr, range(0x0001F1E6, 0x0001F200)))
 THUMBS_EMOJI = ("\N{thumbs up sign}", "\N{thumbs down sign}")
 TICK_CROSS_EMOJI = ("\N{check mark}", "\N{cross mark}")
 
@@ -12,7 +10,9 @@ class _SelfMapper:
 
 
 class Menu:
-    def __init__(self, bot, question, options, emoji=LETTER_EMOJI, mapper=None):
+    def __init__(
+        self, bot, question, options, emoji=TICK_CROSS_EMOJI, mapper=None
+    ):
         if len(options) > len(emoji):
             raise ValueError("too many options")
         self.text = self.create_text(question, options, emoji)

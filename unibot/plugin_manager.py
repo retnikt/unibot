@@ -22,7 +22,7 @@ class PluginManifest:
     requirements: Sequence[Mapping[str, str]] = ()
 
 
-class PluginsConfig(unibot._globals.config.section, name="plugins"):
+class PluginsConfig(unibot._globals.config.section, id="plugins"):
     plugin_search_directories: Sequence[str] = ("plugins",)
     plugins_enabled: Sequence[str] = ()
     plugin_unload_timeout: Union[float, int] = 5
