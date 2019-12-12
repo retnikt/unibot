@@ -128,9 +128,9 @@ class SetConfig(BaseCommand):
 
 
 @Config.command
-class GetConfig(BaseCommand):
-    name = "get"
-    help = "gets a config variable"
+class ShowConfig(BaseCommand):
+    name = "show"
+    help = "shows the value of a config variable"
 
     async def initialise(self):
         self.add_argument("key", required=True)
